@@ -132,6 +132,32 @@ a{
     }
 
 }
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 260px;
+    background-color: var(--background-color);
+  
+    box-shadow:
+      0 0 0 1000px rgba(0, 0, 0, 0.2), 
+      3px 0 5px var(--shadow-color);   
+  
+    z-index: 1000; 
+  
+    padding: 2rem 1.5rem;
+    transition: transform 0.3s ease;
+  
+    &.hidden {
+      transform: translateX(-100%);
+    }
+  
+    &.visible {
+      transform: translateX(0);
+    }
+}
+  
 .container{
     padding-inline: 15vw;
 
@@ -149,3 +175,49 @@ a{
     }
     
 }
+.main-content {
+    padding: 100px 20px 40px;
+  }
+  
+  .hero {
+    text-align: center;
+    padding: 60px 20px;
+    background: linear-gradient(to right, #fff5e1, #b47cb1);
+    border-radius: 20px;
+    margin: 0 auto 60px;
+    max-width: 900px;
+  }
+  
+  .hero-title {
+    font-size: 3rem;
+    color: #5f146a;
+    margin-bottom: 20px;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.2rem;
+    color: #666;
+    margin-bottom: 30px;
+  }
+  
+  .hero-button {
+    padding: 12px 30px;
+    background-color: #581d74ef;
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+.App{
+    background-image: url('./R.webp'); /* Reference to image */
+    background-size: cover;   /* Cover the entire header area */
+    background-position: center center;  /* Center the image */
+    color: white;  /* Make text stand out */
+    padding: 100px;
+    text-align: center;
+    background-attachment: fixed; /* Keep the background fixed */
+    position: relative;
+}
+  
