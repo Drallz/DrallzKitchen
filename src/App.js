@@ -1,10 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from "./components/Navbar";
 
 function App() {
   const [sidebarVisible, setSidebarVisible] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [email, setEmail] = useState('');
+  const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const API_KEY = 'e8819ce8de2a47c6a7f0c608c4d6f6be'; // Replace with your actual API key
+  const BASE_URL = 'https://api.spoonacular.com/recipes';
 
   const toggleSidebar = () => {
     setSidebarVisible(!sidebarVisible);
@@ -16,82 +23,64 @@ function App() {
     setEmail('');
   };
 
-  // Sample recipe data
-  const recipes = [
-    {
-      id: 1,
-      title: "Creamy Garlic Pasta",
-      category: "pasta",
-      prepTime: "15 mins",
-      cookTime: "20 mins",
-      rating: 4.8,
-      image: "/drallzkitchen/src/styles/gar.jpeg",
-      description: "A rich and creamy garlic pasta with parmesan and fresh herbs."
-    },
-    {
-      id: 2,
-      title: "Classic Beef Burger",
-      category: "meat",
-      prepTime: "10 mins",
-      cookTime: "15 mins",
-      rating: 4.9,
-      image: "burger.jpg",
-      description: "Juicy beef patty with cheese, lettuce, and special sauce."
-    },
-    {
-      id: 3,
-      title: "Avocado Toast",
-      category: "vegetarian",
-      prepTime: "5 mins",
-      cookTime: "5 mins",
-      rating: 4.5,
-      image: "avocado-toast.jpg",
-      description: "Simple yet delicious smashed avocado on sourdough bread."
-    },
-    {
-      id: 4,
-      title: "Chocolate Lava Cake",
-      category: "dessert",
-      prepTime: "20 mins",
-      cookTime: "12 mins",
-      rating: 5.0,
-      image: "lava-cake.jpg",
-      description: "Warm chocolate cake with a gooey molten center."
-    },
-    {
-      id: 5,
-      title: "Vegetable Stir Fry",
-      category: "vegetarian",
-      prepTime: "15 mins",
-      cookTime: "10 mins",
-      rating: 4.6,
-      image: "stir-fry.jpg",
-      description: "Colorful vegetables in a savory garlic sauce."
-    },
-    {
-      id: 6,
-      title: "Homemade Pizza",
-      category: "italian",
-      prepTime: "30 mins",
-      cookTime: "15 mins",
-      rating: 4.7,
-      image: "pizza.jpg",
-      description: "Classic pizza with your choice of toppings."
-    }
-  ];
-
   const categories = [
     { id: 'all', name: 'All Recipes' },
     { id: 'vegetarian', name: 'Vegetarian' },
-    { id: 'meat', name: 'Meat' },
-    { id: 'pasta', name: 'Pasta' },
-    { id: 'dessert', name: 'Dessert' },
-    { id: 'italian', name: 'Italian' }
+    { id: 'vegan', name: 'Vegan' },
+    { id: 'glutenFree', name: 'Gluten Free' },
+    { id: 'dairyFree', name: 'Dairy Free' }
   ];
+
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        let url = `${BASE_URL}/random?apiKey=${API_KEY}&number=12`;
+        
+        // Add dietary filters if not 'all'
+        if (selectedCategory !== 'all') {
+          url += `&tags=${selectedCategory}`;
+        }
+        
+        // Add search query if present
+        if (searchQuery) {
+          url = `${BASE_URL}/complexSearch?apiKey=${API_KEY}&query=${searchQuery}&number=12`;
+        }
+
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch recipes');
+        }
+        
+        const data = await response.json();
+        
+        // Handle both random and search endpoints
+        const recipesData = data.recipes || data.results;
+        setRecipes(recipesData || []);
+      } catch (err) {
+        console.error('Error fetching recipes:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecipes();
+  }, [selectedCategory, searchQuery]);
 
   const filteredRecipes = selectedCategory === 'all' 
     ? recipes 
-    : recipes.filter(recipe => recipe.category === selectedCategory);
+    : recipes.filter(recipe => {
+        // Handle different API response structures
+        if (recipe.vegetarian && selectedCategory === 'vegetarian') return true;
+        if (recipe.vegan && selectedCategory === 'vegan') return true;
+        if (recipe.glutenFree && selectedCategory === 'glutenFree') return true;
+        if (recipe.dairyFree && selectedCategory === 'dairyFree') return true;
+        return false;
+      });
 
   return (
     <div className="App">
@@ -103,7 +92,18 @@ function App() {
           <p className="hero-subtitle">
             Discover mouth-watering recipes, cooking tips, and your next favorite dish.
           </p>
-          <button className="hero-button">Explore Quick Recipes</button>
+          <div className="search-container">
+            <input
+              type="text"
+              placeholder="Search recipes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+            <button className="search-button">
+              <i className="fas fa-search"></i>
+            </button>
+          </div>
         </section>
 
         {/* Featured Recipes */}
@@ -123,27 +123,75 @@ function App() {
             ))}
           </div>
           
+          {/* Loading and Error States */}
+          {loading && (
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Loading delicious recipes...</p>
+            </div>
+          )}
+          
+          {error && (
+            <div className="error-message">
+              <p>Error loading recipes: {error}</p>
+              <button onClick={() => window.location.reload()} className="retry-btn">
+                Retry
+              </button>
+            </div>
+          )}
+          
           {/* Recipe Grid */}
-          <div className="recipes-grid">
-            {filteredRecipes.map(recipe => (
-              <div key={recipe.id} className="recipe-card">
-                <div className="recipe-image">
-                  <img src={`/images/${recipe.image}`} alt={recipe.title} />
-                  <div className="category-badge">{recipe.category}</div>
+          {!loading && !error && (
+            <>
+              {filteredRecipes.length > 0 ? (
+                <div className="recipes-grid">
+                  {filteredRecipes.map(recipe => (
+                    <div key={recipe.id} className="recipe-card">
+                      <div className="recipe-image">
+                        <img 
+                          src={recipe.image || `https://spoonacular.com/recipeImages/${recipe.id}-556x370.jpg`} 
+                          alt={recipe.title} 
+                          onError={(e) => {
+                            e.target.src = '/placeholder-food.jpg'; // Fallback image
+                          }}
+                        />
+                        <div className="category-badge">
+                          {recipe.vegetarian ? 'Vegetarian' : 
+                           recipe.vegan ? 'Vegan' : 'Regular'}
+                        </div>
+                      </div>
+                      <div className="recipe-content">
+                        <h3 className="recipe-title">{recipe.title}</h3>
+                        <p className="recipe-description">
+                          {recipe.summary?.replace(/<[^>]*>?/gm, '').substring(0, 100)}...
+                        </p>
+                        <div className="recipe-meta">
+                          <span className="prep-time">
+                            <i className="far fa-clock"></i> {recipe.readyInMinutes} mins
+                          </span>
+                          <span className="servings">
+                            <i className="fas fa-utensils"></i> {recipe.servings} servings
+                          </span>
+                        </div>
+                        <a 
+                          href={recipe.sourceUrl || `https://spoonacular.com/recipes/${recipe.title}-${recipe.id}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="view-recipe-btn"
+                        >
+                          View Recipe
+                        </a>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="recipe-content">
-                  <h3 className="recipe-title">{recipe.title}</h3>
-                  <p className="recipe-description">{recipe.description}</p>
-                  <div className="recipe-meta">
-                    <span className="prep-time"><i className="far fa-clock"></i> {recipe.prepTime}</span>
-                    <span className="cook-time"><i className="fas fa-fire"></i> {recipe.cookTime}</span>
-                    <span className="rating"><i className="fas fa-star"></i> {recipe.rating}</span>
-                  </div>
-                  <button className="view-recipe-btn">View Recipe</button>
+              ) : (
+                <div className="no-results">
+                  <p>No recipes found. Try a different search or category.</p>
                 </div>
-              </div>
-            ))}
-          </div>
+              )}
+            </>
+          )}
         </section>
 
         {/* Cooking Tips */}
@@ -206,10 +254,11 @@ function App() {
             <div className="footer-section">
               <h4>Categories</h4>
               <ul>
-                <li><a href="/category/vegetarian">Vegetarian</a></li>
-                <li><a href="/category/meat">Meat</a></li>
-                <li><a href="/category/dessert">Dessert</a></li>
-                <li><a href="/category/pasta">Pasta</a></li>
+                {categories.slice(1).map(category => (
+                  <li key={category.id}>
+                    <a href={`/category/${category.id}`}>{category.name}</a>
+                  </li>
+                ))}
               </ul>
             </div>
             <div className="footer-section">
