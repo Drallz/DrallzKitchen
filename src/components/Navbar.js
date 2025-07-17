@@ -1,27 +1,22 @@
-import { useState } from "react"
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
-export default function Navbar(){
-    const [showSidebar, setShowSidebar] = useState(false)
-
-    return(
-        <>
+export default function Navbar({ toggleSidebar }) {
+    return (
         <div className="navbar container">
-            <a href="#!" className="logo">Drallz<span>Kit</span>Chen🍽️</a>
+            <Link to="/" className="logo">Drallz<span>Kit</span>Chen🍽️</Link>
 
             <div className="nav-links">
-                <a href="#!">Home</a>
-                <a href="#!">Recipes</a>
-                <a href="#!">Settings</a>
-
+                <Link to="/">Home</Link>
+                <Link to="/recipes">Recipes</Link>
+                <Link to="/settings">Settings</Link>
             </div>
-            <div onClick={() => setShowSidebar(!showSidebar)} className={showSidebar ? "sidebar-btn" : "sidebar-btn active"}>
+            
+            <div onClick={toggleSidebar} className="sidebar-btn">
                 <div className="bar"></div>
                 <div className="bar"></div>
                 <div className="bar"></div>
-
             </div>
         </div>
-        <Sidebar/>
-        </>
-    )
+    );
 }
